@@ -1,48 +1,65 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-      ANSIBLE_CONFIG="${WORKSPACE}/deploy/ansible.cfg"
+    environment {
+        ANSIBLE_CONFIG = "${WORKSPACE}/deploy/ansible.cfg"
     }
 
-  parameters {
-      string(name: 'inventory', defaultValue: 'dev',  description: 'This is the inventory file for the environment to deploy configuration')
+    parameters {
+        string(name: 'inventory', defaultValue: 'dev', description: 'This is the inventory file for the environment to deploy configuration')
     }
 
-  stages{
-      stage("Initial cleanup") {
-          steps {
-            dir("${WORKSPACE}") {
-              deleteDir()
+    stages {
+        stage("Initial cleanup") {
+            steps {
+                deleteDir()
             }
-          }
         }
 
-      stage('Checkout SCM') {
-         steps{
-            git branch: 'main', url: 'https://github.com/PISTIS-Solutions/pistis-ansible-demo-2.git'
-         }
-       }
-
-      stage('Prepare Ansible For Execution') {
-        steps {
-          sh 'echo ${WORKSPACE}' 
-          sh 'sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg' 
+        stage('Checkout SCM') {
+            steps {
+                git branch: 'main', url: 'https://github.com/PISTIS-Solutions/ansible-lab-guide-1.git'
+            }
         }
-     }
 
-      stage('Run Ansible playbook') {
-        steps {
-           ansiblePlaybook become: true, colorized: true, credentialsId: 'private-key', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/${inventory}', playbook: 'playbooks/site.yml'
-         }
-      }
-
-      stage('Clean Workspace after build'){
-        steps{
-          cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, deleteDirs: true)
+        stage('Prepare Ansible For Execution') {
+            steps {
+                sh 'echo ${WORKSPACE}'
+                sh 'sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg'
+            }
         }
-      }
-   }
 
+        stage('Deployment') {
+            steps {
+                script {
+                    if (params.inventory == 'prod') {
+                        timeout(time: 15, unit: 'MINUTES') {
+                            input message: 'Do you want to approve the deployment?', ok: 'Yes'
+                        }
+                    }
+                }
+                echo "Initiating deployment"
+            }
+        }
+
+        stage('Run Ansible playbook') {
+            steps {
+                ansiblePlaybook(
+                    become: true,
+                    colorized: true,
+                    credentialsId: 'private-key',
+                    disableHostKeyChecking: true,
+                    installation: 'ansible',
+                    inventory: "inventory/${params.inventory}",
+                    playbook: 'playbooks/site.yml'
+                )
+            }
+        }
+
+        stage('Clean Workspace after build') {
+            steps {
+                cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, deleteDirs: true)
+            }
+        }
+    }
 }
-
