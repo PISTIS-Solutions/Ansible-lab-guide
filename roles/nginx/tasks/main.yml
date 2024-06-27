@@ -1,6 +1,5 @@
 ---
 # tasks file for nginx
-
 - name: Update apt repository cache
   ansible.builtin.apt:
     update_cache: yes
@@ -8,26 +7,11 @@
 - name: Install Nginx
   ansible.builtin.apt:
     name: nginx
-    state: present
+    state: latest
 
-- name: Ensure Nginx is started and enabled
-  ansible.builtin.service:
-    name: nginx
-    state: started
-    enabled: yes
+  notify:
+    - restart nginx
 
-- name: Install PHP and required extensions
-  ansible.builtin.apt:
-    name:
-      - php
-      - php-fpm
-      - php-mysql
-      - php-gd
-      - php-curl
-    state: present
-
-- name: Ensure PHP-FPM is started and enabled
-  ansible.builtin.service:
-    name: php7.4-fpm
-    state: started
-    enabled: yes
+handlers:
+  - name: restart nginx
+    service: name=nginx state=reloaded
