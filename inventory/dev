@@ -1,7 +1,7 @@
 [database]
-13.41.240.34 ansible_ssh_user='ubuntu'
+13.42.45.239 ansible_ssh_user='ubuntu'
 
 [webservers]
-35.176.248.189 ansible_ssh_user='ubuntu'
+3.8.130.152 ansible_ssh_user='ubuntu'
 
 
