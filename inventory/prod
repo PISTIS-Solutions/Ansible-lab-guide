@@ -1,5 +1,5 @@
 [webservers]
-13.42.28.40 ansible_ssh_user='ubunut'
+13.42.28.40 ansible_ssh_user='ubuntu'
 
 
 [database]
